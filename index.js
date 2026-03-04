@@ -36,24 +36,34 @@ const STYLE_CONFIGS = {
   }
 };
 
-// 生成圖片
+// 生成圖片 - 使用 Gemini 圖片生成模型
 async function generateImage(prompt) {
   const { GoogleGenerativeAI } = require('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   
+  // 使用 Gemini 2.0 Flash Image Generation 模型
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-exp-image-generation",
-    generationConfig: { responseModalities: ["image", "text"] }
+    model: "gemini-2.0-flash-exp-image-generation-002"
   });
   
   const result = await model.generateContent(prompt);
   
-  for (const part of result.response.candidates[0].content.parts) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+  // 檢查回應
+  console.log("Generation result:", JSON.stringify(result).slice(0, 200));
+  
+  // 處理圖片回傳
+  if (result.response?.candidates?.[0]?.content?.parts) {
+    for (const part of result.response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        const mimeType = part.inlineData.mimeType || 'image/png';
+        return `data:${mimeType};base64,${part.inlineData.data}`;
+      }
     }
   }
-  throw new Error("無法生成圖片");
+  
+  // 如果沒有圖片，回傳錯誤
+  console.log("Full response:", JSON.stringify(result).slice(0, 500));
+  throw new Error("無法生成圖片，請檢查 API Key 是否正確");
 }
 
 // API 端點
