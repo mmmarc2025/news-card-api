@@ -37,29 +37,35 @@ const STYLE_CONFIGS = {
   }
 };
 
-// 使用 Jina AI 抓取被擋的新聞
+// 使用 Jina AI / Scrap巾巾 抓取被擋的新聞
 async function fetchNewsContent(url) {
-  try {
-    // 使用 jina.ai 服務抓取網頁
-    const jinaUrl = `https://r.jina.ai/${url}`;
-    const response = await fetch(jinaUrl);
-    const text = await response.text();
-    
-    // 解析標題和內容
-    const lines = text.split('\n').filter(l => l.trim());
-    
-    // 取標題（第一行）
-    let title = lines[0] || "新聞標題";
-    if (title.length > 100) title = title.slice(0, 100);
-    
-    // 取內容（取前幾行作為摘要）
-    const content = lines.slice(1, 6).join(' ').slice(0, 500);
-    
-    return { title, content: content || "無法取得內容" };
-  } catch (error) {
-    console.error("Fetch error:", error);
-    return { title: "無法取得新聞", content: "" };
+  // 嘗試多個備援服務
+  const services = [
+    `https://r.jina.ai/${url}`,
+    `https://r.jina.ai/http://${url.replace('https://', '')}`,
+    `https://r.jina.ai/http://${url}`,
+  ];
+  
+  for (const jinaUrl of services) {
+    try {
+      const response = await fetch(jinaUrl);
+      if (response.ok) {
+        const text = await response.text();
+        if (text && !text.includes('SecurityCompromiseError') && !text.includes('blocked')) {
+          const lines = text.split('\n').filter(l => l.trim());
+          let title = lines[0] || "新聞標題";
+          if (title.length > 100) title = title.slice(0, 100);
+          const content = lines.slice(1, 6).join(' ').slice(0, 500);
+          return { title, content: content || "無法取得內容" };
+        }
+      }
+    } catch (e) {
+      console.log("Service failed:", jinaUrl.slice(0, 50));
+    }
   }
+  
+  // 如果都失敗，回傳錯誤訊息
+  return { title: "無法取得新聞（來源被擋）", content: "請手動提供新聞標題和內容" };
 }
 
 // 生成圖片 - 使用 Nano Banana Pro 模型
