@@ -67,12 +67,12 @@ async function generateImage(prompt) {
   const { GoogleGenerativeAI } = require('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   
-  // 使用 gemini-2.0-pro-exp 模型（高品質生成）
+  // 使用 gemini-3.1-flash-image-preview 模型（高品質生成）
   // 加上詳細的 prompt 確保中文字清楚
   const enhancedPrompt = prompt + " 請確保中文字清晰可讀，使用高解析度向量插畫風格，4K解析度，專業新聞設計，文字不要模糊。";
   
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-pro-exp"
+    model: "gemini-3.1-flash-image-preview"
   });
   
   const result = await model.generateContent(enhancedPrompt);
