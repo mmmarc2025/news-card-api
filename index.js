@@ -41,9 +41,9 @@ async function generateImage(prompt) {
   const { GoogleGenerativeAI } = require('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   
-  // 使用 Gemini 2.0 Flash 圖片生成模型
+  // 使用 Gemini 3 Pro Image Preview 模型（專門生成圖片）
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-exp"
+    model: "gemini-3-pro-image-preview"
   });
   
   const result = await model.generateContent(prompt);
