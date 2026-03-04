@@ -122,19 +122,22 @@ app.post('/api/generate', async (req, res) => {
     }
     
     // 如果有 newsUrl，自動抓取內容
-    let title = inputTitle;
+    let title = inputTitle || "新聞標題";
     let content = inputContent;
     let newsMedia = null;
     
     if (newsUrl && !inputTitle) {
       const news = await fetchNewsContent(newsUrl);
-      title = news.title;
-      content = news.content;
+      title = news.title || title;  // 使用新聞實際標題
+      content = content || news.content;
       newsMedia = news.media;
     }
     
+    // 取得今天的日期
+    const today = new Date().toISOString().split('T')[0];
+    
     const config = STYLE_CONFIGS[style] || STYLE_CONFIGS["打綠班"];
-    const mediaLogo = newsMedia || "新聞網";  // 使用新聞實際來源
+    const mediaLogo = newsMedia || "新聞網";  // 使用新聞實際來源媒體
     const pointsMap = {
       "精簡": "3-4個重點",
       "一般": "5-6個重點",
@@ -143,7 +146,7 @@ app.post('/api/generate', async (req, res) => {
     
     // 強化 prompt：確保 4K 解析度和清楚的中文字，正確的媒體 Logo 和日期
     // Use newsMedia from fetch
-    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期2026-03-04。現代專業設計，中文字必須清晰可讀，不要模糊。`;
+    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期${today}。現代專業設計，中文字必須清晰可讀，不要模糊。`;
     
     console.log("Generating with prompt:", basePrompt.slice(0, 100));
     
