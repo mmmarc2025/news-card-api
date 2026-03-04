@@ -60,8 +60,20 @@ async function fetchNewsContent(url) {
           const lines = text.split('\n').filter(l => l.trim());
           let title = lines[0] || "新聞標題";
           if (title.length > 100) title = title.slice(0, 100);
+          
+          // 嘗試從網址或內容中找出媒體名稱
+          let media = "新聞網";
+          if (url.includes('chinatimes')) media = "中時新聞網";
+          else if (url.includes('ettoday')) media = "ETtoday";
+          else if (url.includes('nownews')) media = "NowNews";
+          else if (url.includes('udn')) media = "聯合報";
+          else if (url.includes('ltn')) media = "自由時報";
+          else if (url.includes('setn')) media = "三立新聞";
+          else if (url.includes('taisounds')) media = "太報";
+          else if (url.includes('yahoo')) media = "Yahoo新聞";
+          
           const content = lines.slice(1, 6).join(' ').slice(0, 500);
-          return { title, content: content || "無法取得內容" };
+          return { title, content: content || "無法取得內容", media };
         }
       }
     } catch (e) {
@@ -70,7 +82,7 @@ async function fetchNewsContent(url) {
   }
   
   // 如果都失敗，回傳錯誤訊息
-  return { title: "無法取得新聞（來源被擋）", content: "請手動提供新聞標題和內容" };
+  return { title: "無法取得新聞（來源被擋）", content: "請手動提供新聞標題和內容", media: "新聞網" };
 }
 
 // 生成圖片 - 使用 Nano Banana Pro 模型
@@ -120,7 +132,7 @@ app.post('/api/generate', async (req, res) => {
     }
     
     const config = STYLE_CONFIGS[style] || STYLE_CONFIGS["打綠班"];
-    const mediaLogo = config.logo || "中時新聞網";
+    const mediaLogo = newsMedia || "新聞網";  // 使用新聞實際來源
     const pointsMap = {
       "精簡": "3-4個重點",
       "一般": "5-6個重點",
@@ -128,7 +140,7 @@ app.post('/api/generate', async (req, res) => {
     };
     
     // 強化 prompt：確保 4K 解析度和清楚的中文字，正確的媒體 Logo 和日期
-    const mediaLogo = STYLE_CONFIGS[style]?.logo || "中時新聞網";
+    // Use newsMedia from fetch
     const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期2026-03-04。現代專業設計，中文字必須清晰可讀，不要模糊。`;
     
     console.log("Generating with prompt:", basePrompt.slice(0, 100));
