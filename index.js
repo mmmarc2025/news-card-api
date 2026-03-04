@@ -13,27 +13,32 @@ const STYLE_CONFIGS = {
   "打綠班": {
     bg: "深色背景（黑色）",
     colors: "紅色與黃色字體",
-    vibe: "攻擊性、諷刺性"
+    vibe: "攻擊性、諷刺性",
+    logo: "中時新聞網"
   },
   "不演了新聞台": {
     bg: "暗紅色與黑色背景",
     colors: "白色與紅色字體",
-    vibe: "諷刺、誇飾"
+    vibe: "諷刺、誇飾",
+    logo: "中天新聞網"
   },
   "誰來早餐": {
     bg: "晨光橙色與暖黃色背景",
     colors: "深棕色與白色字體",
-    vibe: "活力、輕鬆、晨間氛圍"
+    vibe: "活力、輕鬆、晨間氛圍",
+    logo: "TVBS"
   },
   "吃飽來打臉": {
     bg: "紅色與黑色強對比背景",
     colors: "白色與紅色字體",
-    vibe: "攻擊性、打臉風格"
+    vibe: "攻擊性、打臉風格",
+    logo: "中天新聞網"
   },
   "邱老師": {
     bg: "迷彩灰與軍綠色背景",
     colors: "橘紅色點綴與白色字體",
-    vibe: "軍事專業、硬派"
+    vibe: "軍事專業、硬派",
+    logo: "軍武網"
   }
 };
 
@@ -115,14 +120,16 @@ app.post('/api/generate', async (req, res) => {
     }
     
     const config = STYLE_CONFIGS[style] || STYLE_CONFIGS["打綠班"];
+    const mediaLogo = config.logo || "中時新聞網";
     const pointsMap = {
       "精簡": "3-4個重點",
       "一般": "5-6個重點",
       "詳細": "7-8個重點"
     };
     
-    // 強化 prompt：確保 4K 解析度和清楚的中文字
-    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放媒體LOGO和日期。現代專業設計，中文字必須清晰可讀，不要模糊。`;
+    // 強化 prompt：確保 4K 解析度和清楚的中文字，正確的媒體 Logo 和日期
+    const mediaLogo = STYLE_CONFIGS[style]?.logo || "中時新聞網";
+    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期2026-03-04。現代專業設計，中文字必須清晰可讀，不要模糊。`;
     
     console.log("Generating with prompt:", basePrompt.slice(0, 100));
     
