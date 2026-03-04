@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
 app.use(cors());
@@ -36,22 +37,42 @@ const STYLE_CONFIGS = {
   }
 };
 
-// 生成圖片 - 使用 Gemini 圖片生成模型
+// 使用 Jina AI 抓取被擋的新聞
+async function fetchNewsContent(url) {
+  try {
+    // 使用 jina.ai 服務抓取網頁
+    const jinaUrl = `https://r.jina.ai/${url}`;
+    const response = await fetch(jinaUrl);
+    const text = await response.text();
+    
+    // 解析標題和內容
+    const lines = text.split('\n').filter(l => l.trim());
+    
+    // 取標題（第一行）
+    let title = lines[0] || "新聞標題";
+    if (title.length > 100) title = title.slice(0, 100);
+    
+    // 取內容（取前幾行作為摘要）
+    const content = lines.slice(1, 6).join(' ').slice(0, 500);
+    
+    return { title, content: content || "無法取得內容" };
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return { title: "無法取得新聞", content: "" };
+  }
+}
+
+// 生成圖片
 async function generateImage(prompt) {
   const { GoogleGenerativeAI } = require('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   
-  // 使用 Gemini 3 Pro Image Preview 模型（專門生成圖片）
   const model = genAI.getGenerativeModel({
     model: "gemini-3-pro-image-preview"
   });
   
   const result = await model.generateContent(prompt);
   
-  // 檢查回應
-  console.log("Generation result:", JSON.stringify(result).slice(0, 200));
-  
-  // 處理圖片回傳
   if (result.response?.candidates?.[0]?.content?.parts) {
     for (const part of result.response.candidates[0].content.parts) {
       if (part.inlineData) {
@@ -61,18 +82,26 @@ async function generateImage(prompt) {
     }
   }
   
-  // 如果沒有圖片，回傳錯誤
-  console.log("Full response:", JSON.stringify(result).slice(0, 500));
-  throw new Error("無法生成圖片，請檢查 API Key 是否正確");
+  throw new Error("無法生成圖片");
 }
 
 // API 端點
 app.post('/api/generate', async (req, res) => {
   try {
-    const { newsUrl, style, richness, title, content } = req.body;
+    const { newsUrl, style, richness, title: inputTitle, content: inputContent } = req.body;
     
     if (!GEMINI_API_KEY) {
       return res.status(500).json({ error: "API Key 未設定" });
+    }
+    
+    // 如果有 newsUrl，自動抓取內容
+    let title = inputTitle;
+    let content = inputContent;
+    
+    if (newsUrl && !inputTitle) {
+      const news = await fetchNewsContent(newsUrl);
+      title = news.title;
+      content = news.content;
     }
     
     const config = STYLE_CONFIGS[style] || STYLE_CONFIGS["打綠班"];
@@ -82,7 +111,9 @@ app.post('/api/generate', async (req, res) => {
       "詳細": "7-8個重點"
     };
     
-    const prompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物。標題「${title || '新聞標題'}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版。底部放媒體LOGO和日期。現代設計，資訊分明。`;
+    const prompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版。底部放媒體LOGO和日期。現代設計，資訊分明。`;
+    
+    console.log("Generating with prompt:", prompt.slice(0, 100));
     
     const imageBase64 = await generateImage(prompt);
     
@@ -90,7 +121,7 @@ app.post('/api/generate', async (req, res) => {
       success: true,
       data: {
         imageUrl: imageBase64,
-        title: title || "新聞標題"
+        title: title
       }
     });
   } catch (error) {
