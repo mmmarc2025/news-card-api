@@ -62,16 +62,20 @@ async function fetchNewsContent(url) {
   }
 }
 
-// 生成圖片
+// 生成圖片 - 使用 Nano Banana Pro 模型
 async function generateImage(prompt) {
   const { GoogleGenerativeAI } = require('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   
+  // 使用 gemini-2.0-pro-exp 模型（高品質生成）
+  // 加上詳細的 prompt 確保中文字清楚
+  const enhancedPrompt = prompt + " 請確保中文字清晰可讀，使用高解析度向量插畫風格，4K解析度，專業新聞設計，文字不要模糊。";
+  
   const model = genAI.getGenerativeModel({
-    model: "gemini-3-pro-image-preview"
+    model: "gemini-2.0-pro-exp"
   });
   
-  const result = await model.generateContent(prompt);
+  const result = await model.generateContent(enhancedPrompt);
   
   if (result.response?.candidates?.[0]?.content?.parts) {
     for (const part of result.response.candidates[0].content.parts) {
@@ -111,11 +115,12 @@ app.post('/api/generate', async (req, res) => {
       "詳細": "7-8個重點"
     };
     
-    const prompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版。底部放媒體LOGO和日期。現代設計，資訊分明。`;
+    // 強化 prompt：確保 4K 解析度和清楚的中文字
+    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放媒體LOGO和日期。現代專業設計，中文字必須清晰可讀，不要模糊。`;
     
-    console.log("Generating with prompt:", prompt.slice(0, 100));
+    console.log("Generating with prompt:", basePrompt.slice(0, 100));
     
-    const imageBase64 = await generateImage(prompt);
+    const imageBase64 = await generateImage(basePrompt);
     
     res.json({
       success: true,
