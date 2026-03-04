@@ -124,11 +124,13 @@ app.post('/api/generate', async (req, res) => {
     // 如果有 newsUrl，自動抓取內容
     let title = inputTitle;
     let content = inputContent;
+    let newsMedia = null;
     
     if (newsUrl && !inputTitle) {
       const news = await fetchNewsContent(newsUrl);
       title = news.title;
       content = news.content;
+      newsMedia = news.media;
     }
     
     const config = STYLE_CONFIGS[style] || STYLE_CONFIGS["打綠班"];
