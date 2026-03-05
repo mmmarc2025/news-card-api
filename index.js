@@ -70,7 +70,7 @@ async function fetchNewsContent(url) {
           else if (url.includes('ltn')) media = "自由時報";
           else if (url.includes('setn')) media = "三立新聞";
           else if (url.includes('taisounds')) media = "太報";
-          else if (url.includes('yahoo')) media = "Yahoo新聞";
+          else if (url.includes('yahoo')) media = "Yahoo 新聞";
           
           const content = lines.slice(1, 6).join(' ').slice(0, 500);
           return { title, content: content || "無法取得內容", media };
@@ -146,7 +146,7 @@ app.post('/api/generate', async (req, res) => {
     
     // 強化 prompt：確保 4K 解析度和清楚的中文字，正確的媒體 Logo 和日期
     // Use newsMedia from fetch
-    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」要超大、超醒目放在最上方。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期${today}。現代專業設計，中文字必須清晰可讀，不要模糊。標題字體要夠大夠清楚。`;
+    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫。標題「${title}」要超大、超醒目放在最上方。內容需要${pointsMap[richness] || pointsMap["一般"]}。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度。底部放「${mediaLogo}」LOGO和日期${today}，LOGO要像${mediaLogo}的官方風格。現代專業設計，中文字必須清晰可讀，不要模糊。標題字體要超大夠清楚。`;
     
     console.log("Generating with prompt:", basePrompt.slice(0, 100));
     
