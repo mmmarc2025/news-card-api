@@ -147,7 +147,7 @@ app.post('/api/generate', async (req, res) => {
     
     // 強化 prompt：確保 4K 解析度和清楚的中文字，正確的媒體 Logo 和日期
     // Use newsMedia from fetch
-    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，人物要精細刻畫，臉部表情清晰。標題「${title}」要超大、超醒目放在最上方，字體要夠大夠清楚。內容需要${pointsMap[richness] || pointsMap["一般"]}，每點要分明整齊。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度，專業新聞設計風格。底部放「${mediaLogo}」LOGO和日期${today}，LOGO要像${mediaLogo}的官方風格。整體設計要清晰、專業、色彩協調。中文字必須清晰可讀，不要模糊，不要變形。`;
+    const basePrompt = `資訊圖卡，${config.vibe}風格。${config.bg}。用向量插畫呈現新聞相關人物，臉部表情清晰。標題「${title}」要超大、超醒目放在最上方，字體夠大夠清楚。內容需要${pointsMap[richness] || pointsMap["一般"]}，分明整齊。${content ? '內容摘要：' + content : ''}16:9橫版，4K超高清解析度，專業新聞設計。底部放「${mediaLogo}」LOGO和日期${today}，LOGO要像${mediaLogo}的官方LOGO。整體設計清晰、專業、色彩協調。中文字必須清晰可讀，不要模糊。`;
     
     console.log("Generating with prompt:", basePrompt.slice(0, 100));
     
