@@ -99,7 +99,7 @@ async function generateImage(prompt) {
     }
   });
   
-  const result = await model.generateContent(basePrompt);
+  const result = await model.generateContent(prompt);
   
   if (result.response?.candidates?.[0]?.content?.parts) {
     for (const part of result.response.candidates[0].content.parts) {
